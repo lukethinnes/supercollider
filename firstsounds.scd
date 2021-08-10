@@ -2,7 +2,7 @@
 s.boot;
 
 x.free;
-x = {SinOsc.ar}.play;
+x = {SinOsc.ar(freq: 440, phase: 0, mul: 0.25, add: 0)}.play;
 //Functions can not be freed on their own.
 //To free a function, store in variable:
 y = x.free;
@@ -15,10 +15,10 @@ y.play;
 { SinOsc.ar(SinOsc.ar(XLine.kr(1, 1000, 9), 0, 200, 800), 0, 0.25) }.play;
 
 // phase modulation (see also PMOsc)
+
 { SinOsc.ar(800, SinOsc.ar(XLine.kr(1, 1000, 9), 0, 2pi), 0.25) }.play;
 
 (
-z = {SinOsc.ar(700, * 0.125)}.play;
 zx = {
 	arg freq = 400, amp = 1;
 	var sig;
@@ -37,16 +37,26 @@ z = {
 
 // Random frequency with SynthDef
 (
-SynthDef.new(\sineTest, {
-  arg noiseHz=8;
-  var freq, amp, sig;
-  freq = LFNoise0.kr(noiseHz).exprange(200,1000);
-  amp = LFNoise1.kr(12).exprange(0,0.2,1);
-  sig = SinOsc.ar(freq) * amp;
-  Out.ar(0, sig);
+SynthDef.new(\pulseTest, {
+  arg fund=40, maxPartial=4;
+  var amp1, amp2, freq1, freq2, sig1, sig2;
+  amp1 = LFPulse.kr(ampHz, 0, 0.12) * 0.75;
+  amp2 = LFPulse.kr(ampHz, 0, 0.12) * 0.75;
+  freq1 = LFNoise0.kr(4).exprange(fund, fund*maxPartial).round(fund);
+  freq2 = LFNoise0.kr(4).exprange(fund, fund*maxPartial).round(fund);
+  freq1 = freq1 * LFPulse.kr(8, add:1);
+  freq2 = freq2 * LFPulse.kr(6, add:1);
+  sig1 = Pulse.ar(freq1, width, amp1);
+  sig2 = Pulse.ar(freq2, width, amp2);
+  sig1 = FreeVerb.ar(sig1, 0.7, 0.8, 0.25);
+  sig2 = FreeVerb.ar(sig1, 0.7, 0.8, 0.25);
+  Out.ar(0, sig1);
+  Out.ar(1, sig2);
 }).add;
 )
 
-x = Synth.new(\sineTest);
+x = Synth.new(\pulseTest);
 
 x.free;
+
+s.quit;
